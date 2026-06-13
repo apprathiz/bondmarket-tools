@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bond Parameter Explorer — Advanced</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1B2A4A; --cobalt:#2563EB; --cobalt-light:#EFF6FF;
+  --amber:#D97706; --green:#16A34A;
+  --border:#E2E8F0; --bg:#F8FAFC;
+  --label:#374151;
+  --mono:'IBM Plex Mono',monospace; --sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:#1E293B;font-size:14px}
+
+/* Header — slug+meta left-aligned baseline */
+header{background:var(--navy);border-bottom:3px solid var(--cobalt);padding:.85rem 1.5rem;
+  display:flex;align-items:baseline;gap:1.25rem}
+header .slug{color:#fff;font-size:1.05rem;font-weight:600;letter-spacing:.01em}
+header .meta{color:#94A3B8;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em}
+
+.main{padding:.5rem .75rem .75rem;display:flex;flex-direction:column;gap:.5rem}
+
+/* Chart panel */
+.chart-panel{background:#fff;border:1px solid var(--border);border-radius:6px;padding:.55rem .65rem}
+.tab-row{display:flex;margin-bottom:.45rem;border:1px solid var(--border);border-radius:4px;
+  overflow:hidden;width:fit-content}
+.tab-btn{padding:.25rem .85rem;font-family:var(--mono);font-size:.68rem;border:none;
+  background:#fff;color:#64748B;cursor:pointer;transition:background .12s}
+.tab-btn.active{background:var(--navy);color:#fff}
+.slider-row{display:flex;align-items:center;gap:1rem;margin-bottom:.45rem;flex-wrap:wrap}
+.sl-grp{display:flex;align-items:center;gap:.4rem}
+.sl-grp label{font-family:var(--mono);font-size:.7rem;color:var(--label);white-space:nowrap}
+.sl-grp input[type=range]{width:120px;accent-color:var(--cobalt)}
+.sl-grp .v{font-family:var(--mono);font-size:.75rem;font-weight:600;color:var(--navy);min-width:3rem}
+canvas{display:block;width:100%}
+#chart-c{height:344px}
+#bar-c{height:152px}
+.chart-legend{display:flex;gap:.65rem;margin-top:.3rem;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:.25rem;font-family:var(--mono);font-size:.7rem;color:var(--label)}
+.leg-sw{width:18px;height:2px}
+
+/* Bottom row — shock panel narrow, heatmap fills rest */
+.bottom-row{display:grid;grid-template-columns:2fr 3fr;gap:.5rem}
+.panel{background:#fff;border:1px solid var(--border);border-radius:6px;padding:.55rem .65rem}
+.panel-hdr{font-family:var(--mono);font-size:.68rem;font-weight:600;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;padding-bottom:.3rem;
+  border-bottom:2px solid var(--cobalt)}
+
+/* Shock panel */
+.shock-sl-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.45rem}
+.shock-sl-row label{font-family:var(--mono);font-size:.7rem;color:var(--label)}
+.shock-sl-row input[type=range]{flex:1;accent-color:var(--cobalt)}
+.shock-sl-row .v{font-family:var(--mono);font-size:.75rem;font-weight:600;color:var(--navy);min-width:3.8rem}
+.insight{font-family:var(--mono);font-size:.66rem;color:var(--label);margin-top:.3rem}
+
+/* Heatmap */
+.hm-grid{display:grid;gap:2px;margin-bottom:.3rem}
+.hm-corner{font-family:var(--mono);font-size:.58rem;color:#64748B;
+  text-align:center;padding:.2rem;line-height:1.3;display:flex;align-items:center;justify-content:center}
+.hm-hdr{font-family:var(--mono);font-size:.65rem;color:var(--label);
+  text-align:center;padding:.2rem 0;font-weight:600}
+.hm-cell{font-family:var(--mono);font-size:.68rem;font-weight:600;text-align:center;
+  padding:.2rem 0;border-radius:2px;border:1px solid var(--border);cursor:pointer;
+  user-select:none;transition:border-color .1s;color:#1E293B}
+.hm-cell.active{border:2px solid var(--cobalt)!important}
+.teach-note{font-family:var(--mono);font-size:.65rem;color:var(--label);
+  line-height:1.5;margin-top:.3rem}
+.callout{margin-top:.4rem;background:var(--cobalt-light);border:1px solid var(--cobalt);
+  border-radius:4px;padding:.4rem .5rem;display:none}
+.callout.on{display:block}
+.call-title{font-family:var(--mono);font-size:.7rem;font-weight:600;color:var(--navy);margin-bottom:.25rem}
+.call-row{display:flex;justify-content:space-between;padding:.08rem 0;
+  border-bottom:1px solid rgba(0,0,0,.06);font-family:var(--mono);font-size:.66rem}
+.call-row:last-child{border-bottom:none}
+.call-k{color:var(--label)}.call-v{font-weight:600;color:var(--navy)}
+.call-v.pos{color:var(--green)}.call-v.neg{color:#DC2626}
+
+/* Attribution inside container */
+.attribution{text-align:center;font-size:.75rem;color:#475569;
+  padding:.75rem 0 .25rem;border-top:1px solid var(--border);margin-top:.25rem;
+  font-family:var(--sans);letter-spacing:.01em}
+
+@media(max-width:720px){.bottom-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slug">Bond Parameter Explorer — Advanced</span>
+  <span class="meta">Module 1 &nbsp;·&nbsp; Sessions 2–4</span>
+</header>
+
+<div class="main">
+  <!-- Chart panel -->
+  <div class="chart-panel">
+    <div class="tab-row">
+      <button class="tab-btn active" id="btn-a" onclick="setTab('A')">Tab A — Vary Coupon (fix maturity)</button>
+      <button class="tab-btn" id="btn-b" onclick="setTab('B')">Tab B — Vary Maturity (fix coupon)</button>
+    </div>
+    <div class="slider-row">
+      <div class="sl-grp">
+        <label id="fixed-lbl">Fixed Maturity:</label>
+        <input type="range" id="fixed-sl" min="1" max="30" step="1" value="10" oninput="onFixed()">
+        <span class="v" id="fixed-v">10 yr</span>
+      </div>
+      <div class="sl-grp">
+        <label>Current YTM:</label>
+        <input type="range" id="ytm-sl" min="0.5" max="11.5" step="0.5" value="8" oninput="onYtm()">
+        <span class="v" id="ytm-v">8.0%</span>
+      </div>
+    </div>
+    <canvas id="chart-c"></canvas>
+    <div class="chart-legend" id="leg"></div>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="bottom-row">
+    <!-- Shock panel -->
+    <div class="panel">
+      <div class="panel-hdr">YTM Shock Analysis</div>
+      <div class="shock-sl-row">
+        <label>Shock:</label>
+        <input type="range" id="shock-sl" min="-300" max="300" step="10" value="100" oninput="onShock()">
+        <span class="v" id="shock-v">+100 bp</span>
+      </div>
+      <canvas id="bar-c"></canvas>
+      <div class="insight" id="insight"></div>
+    </div>
+
+    <!-- Heatmap panel -->
+    <div class="panel">
+      <div class="panel-hdr">Sensitivity Heatmap — % ΔPrice</div>
+      <div class="hm-grid" id="hm"></div>
+      <div class="teach-note" id="teach"></div>
+      <div class="callout" id="call"></div>
+    </div>
+  </div>
+
+  <!-- Attribution inside container -->
+  <div class="attribution">
+    © Kishore Rathi · Bond Markets &amp; Fixed Income
+    · Tool to be used by enrolled students only · Not for redistribution
+  </div>
+</div>
+
+<script>
+if(!document.querySelector('.attribution')){
+  document.body.innerHTML='<p style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;">Tool integrity check failed. Please access this tool via the course URL.</p>';
+  throw new Error('Attribution block missing — tool disabled');
+}
+const TOOL_EXPIRY=new Date('2026-08-31');
+if(new Date()>TOOL_EXPIRY){
+  document.body.innerHTML='<div style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;"><p style="font-size:1.1rem;font-weight:600;color:#1B2A4A;">This tool has expired.</p><p>It was valid for the 2026 cohort.</p><p>Contact the course instructor for current access.</p></div>';
+  throw new Error('Tool expired');
+}
+
+// ─── data ──────────────────────────────────────────────────────────────────
+const CPNS  = [0,3,6,9,12];
+const MATS  = [2,5,10,20,30];
+const CPNS6 = [0,3,6,9,12,15];
+const MATS6 = [2,5,10,15,20,30];
+const COLS  = ['#DC2626','#D97706','#16A34A','#2563EB','#7C3AED','#0891B2'];
+
+// X-axis: 0–14%
+const X_MIN=0, X_MAX=12;
+
+let tab='A', fixMaturity=10, fixCoupon=6, ytm=8, shock=100;
+let hlCurve=null, hlBar=null, activeCell={r:null,c:null};
+
+// ─── bond math ───────────────────────────────────────────────────────────────
+function bPrice(yPct,cPct,yrs){
+  const y=Math.max(yPct,0.001)/200, c=cPct/200*100, n=yrs*2;
+  if(n<=0)return 100;
+  if(y<1e-9)return c*n+100;
+  return c*(1-Math.pow(1+y,-n))/y+100*Math.pow(1+y,-n);
+}
+function modDur(yPct,cPct,yrs){
+  const y=Math.max(yPct,0.001)/200, c=cPct/200*100, n=yrs*2, p=bPrice(yPct,cPct,yrs);
+  let num=0;
+  for(let t=1;t<=n;t++){const cf=(t<n)?c:c+100; num+=t*cf*Math.pow(1+y,-t);}
+  return(num/p/2)/(1+y);
+}
+function pctDelta(yPct,shockBp,cPct,yrs){
+  return(bPrice(yPct+shockBp/100,cPct,yrs)/bPrice(yPct,cPct,yrs)-1)*100;
+}
+
+// ─── niceAxis (ceiling-safe) ─────────────────────────────────────────────────
+function niceAxis(lo,hi,n=6){
+  const rng=hi-lo;
+  const steps=[1,2,2.5,5,10,15,20,25,50,100,150,200,250,500];
+  let st=steps[0];
+  for(const s of steps){if(rng/s<=n+1){st=s;break;}}
+  const first=Math.floor(lo/st)*st;
+  const tks=[];
+  // v<hi+st ensures at least one tick above hi — prevents Y-ceiling clipping
+  for(let v=first;v<hi+st;v+=st)if(v>=lo-st*.01)tks.push(parseFloat(v.toFixed(6)));
+  return tks;
+}
+
+// ─── DPR canvas helper ───────────────────────────────────────────────────────
+function resizeC(cvs){
+  const dpr=window.devicePixelRatio||1;
+  const r=cvs.getBoundingClientRect();
+  cvs.width=r.width*dpr; cvs.height=r.height*dpr;
+  const ctx=cvs.getContext('2d'); ctx.scale(dpr,dpr);
+  return{w:r.width,h:r.height};
+}
+
+// ─── chart ───────────────────────────────────────────────────────────────────
+const chartC=document.getElementById('chart-c');
+function drawChart(){
+  const{w,h}=resizeC(chartC);
+  const ctx=chartC.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  const pad={t:10,r:16,b:32,l:44};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const N=200;
+  function toX(v){return pad.l+(v-X_MIN)/(X_MAX-X_MIN)*cw;}
+  // build curves
+  const curves=[], labels=[];
+  if(tab==='A'){
+    CPNS6.forEach(c=>{
+      const pts=[];
+      for(let i=0;i<=N;i++){const y=X_MIN+(X_MAX-X_MIN)*i/N; pts.push({x:y,y:bPrice(y,c,fixMaturity)});}
+      curves.push(pts); labels.push(c+'% cpn');
+    });
+  } else {
+    MATS6.forEach(m=>{
+      const pts=[];
+      for(let i=0;i<=N;i++){const y=X_MIN+(X_MAX-X_MIN)*i/N; pts.push({x:y,y:bPrice(y,fixCoupon,m)});}
+      curves.push(pts); labels.push(m+'yr');
+    });
+  }
+  // Y range from data
+  let yAll=curves.flat().map(p=>p.y);
+  let yLo=Math.min(...yAll), yHi=Math.max(...yAll);
+  const yp=(yHi-yLo)*.04; yLo-=yp; yHi+=yp;
+  const yTks=niceAxis(yLo,yHi,6);
+  yLo=yTks[0]; yHi=yTks[yTks.length-1];
+  function toY(v){return pad.t+(yHi-v)/(yHi-yLo)*ch;}
+  // grid
+  ctx.strokeStyle='#E2E8F0'; ctx.lineWidth=0.5;
+  for(let x=X_MIN;x<=X_MAX;x+=2){ctx.beginPath();ctx.moveTo(toX(x),pad.t);ctx.lineTo(toX(x),pad.t+ch);ctx.stroke();}
+  for(const t of yTks){ctx.beginPath();ctx.moveTo(pad.l,toY(t));ctx.lineTo(pad.l+cw,toY(t));ctx.stroke();}
+  // axis labels
+  ctx.fillStyle='#475569'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  for(let x=X_MIN;x<=X_MAX;x+=2) ctx.fillText(x+'%',toX(x),pad.t+ch+13);
+  ctx.textAlign='right';
+  for(const t of yTks) ctx.fillText(t%1===0?t.toFixed(0):t.toFixed(1),pad.l-4,toY(t)+3);
+  // par line
+  if(100>=yLo&&100<=yHi){
+    ctx.strokeStyle='#CBD5E1'; ctx.lineWidth=0.8; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pad.l,toY(100)); ctx.lineTo(pad.l+cw,toY(100)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // curves
+  curves.forEach((pts,i)=>{
+    const hl=hlCurve===i;
+    ctx.strokeStyle=COLS[i]; ctx.lineWidth=hl?2.8:1.8;
+    ctx.globalAlpha=(hlCurve!==null&&!hl)?0.25:1;
+    ctx.beginPath();
+    pts.forEach((p,j)=>{j===0?ctx.moveTo(toX(p.x),toY(p.y)):ctx.lineTo(toX(p.x),toY(p.y));});
+    ctx.stroke(); ctx.globalAlpha=1;
+  });
+  // current YTM vertical
+  const clampedYtm=Math.min(Math.max(ytm,X_MIN),X_MAX);
+  ctx.strokeStyle='#1B2A4A'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(toX(clampedYtm),pad.t); ctx.lineTo(toX(clampedYtm),pad.t+ch); ctx.stroke();
+  ctx.setLineDash([]);
+  // Tab B inline legend — 3-pass spread, 11px font, 15px min gap
+  if(tab==='B'){
+    const refX=X_MIN+(X_MAX-X_MIN)*0.92; // 92% across chart for label anchor
+    const refIdx=Math.round((refX-X_MIN)/(X_MAX-X_MIN)*N);
+    const positions=curves.map((pts,i)=>{
+      const pt=pts[Math.min(refIdx,pts.length-1)];
+      return{y:toY(pt.y),i,lbl:labels[i]};
+    });
+    positions.sort((a,b)=>a.y-b.y);
+    const G=15;
+    for(let pass=0;pass<4;pass++){
+      for(let k=1;k<positions.length;k++)
+        if(positions[k].y-positions[k-1].y<G) positions[k].y=positions[k-1].y+G;
+      for(let k=positions.length-2;k>=0;k--)
+        if(positions[k+1].y-positions[k].y<G) positions[k].y=positions[k+1].y-G;
+    }
+    ctx.font="bold 11px 'IBM Plex Mono',monospace"; ctx.textAlign='right';
+    positions.forEach(p=>{ctx.fillStyle=COLS[p.i]; ctx.fillText(p.lbl,pad.l+cw-2,p.y+4);});
+  }
+  // bottom legend
+  const legEl=document.getElementById('leg'); legEl.innerHTML='';
+  labels.forEach((lbl,i)=>{
+    legEl.innerHTML+=`<div class="leg-item"><div class="leg-sw" style="background:${COLS[i]}"></div><span>${lbl}</span></div>`;
+  });
+}
+
+// ─── bar chart ────────────────────────────────────────────────────────────────
+const barC=document.getElementById('bar-c');
+function drawBars(){
+  const{w,h}=resizeC(barC);
+  const ctx=barC.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  let bars=[];
+  if(tab==='A'){
+    CPNS6.forEach((c,i)=>bars.push({lbl:c+'% cpn',col:COLS[i],pct:pctDelta(ytm,shock,c,fixMaturity),idx:i}));
+  } else {
+    MATS6.forEach((m,i)=>bars.push({lbl:m+'yr',col:COLS[i],pct:pctDelta(ytm,shock,fixCoupon,m),idx:i}));
+  }
+  bars.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+  const pad={t:4,r:52,b:4,l:54};
+  const bw=w-pad.l-pad.r, bh=h-pad.t-pad.b;
+  const barH=Math.floor(bh/bars.length)-3;
+  const maxAbs=Math.max(...bars.map(d=>Math.abs(d.pct)),0.01);
+  bars.forEach((d,i)=>{
+    const y0=pad.t+i*(barH+3);
+    const len=Math.abs(d.pct)/maxAbs*(bw*.9);
+    const hl=hlBar===d.idx;
+    ctx.globalAlpha=(hlBar!==null&&!hl)?0.3:1;
+    ctx.fillStyle=d.col; ctx.fillRect(pad.l,y0,len,barH);
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#374151'; ctx.font=`9.5px 'IBM Plex Mono',monospace`; ctx.textAlign='right';
+    ctx.fillText(d.lbl,pad.l-4,y0+barH/2+3);
+    ctx.textAlign='left';
+    const str=(d.pct>=0?'+':'')+d.pct.toFixed(2)+'%';
+    ctx.fillStyle=hl?d.col:'#374151';
+    ctx.font=hl?`bold 9.5px 'IBM Plex Mono',monospace`:`9.5px 'IBM Plex Mono',monospace`;
+    ctx.fillText(str,pad.l+len+4,y0+barH/2+3);
+  });
+  const most=bars[0], least=bars[bars.length-1];
+  const leastAbs=Math.abs(least.pct);
+  const ratioStr=leastAbs<0.1
+    ? 'Ratio: n/a (least-sensitive < 0.1%)'
+    : `Ratio: ${(Math.abs(most.pct)/leastAbs).toFixed(1)}×`;
+  document.getElementById('insight').textContent=
+    `Most: ${most.lbl} (${(most.pct>=0?'+':'')+most.pct.toFixed(2)}%) · Least: ${least.lbl} · ${ratioStr}`;
+}
+
+// ─── heatmap ─────────────────────────────────────────────────────────────────
+function cellCol(v,mn,mx){
+  if(Math.abs(v)<.001)return'rgba(255,255,255,.9)';
+  if(v<0){const t=Math.min(Math.abs(v)/Math.max(Math.abs(mn),.001),1);return`rgba(220,38,38,${(t*.75+.1).toFixed(2)})`;}
+  const t=Math.min(v/Math.max(mx,.001),1);
+  return`rgba(22,163,74,${(t*.75+.1).toFixed(2)})`;
+}
+function drawHeatmap(){
+  const data=CPNS.map(c=>MATS.map(m=>pctDelta(ytm,shock,c,m)));
+  const flat=data.flat(), mn=Math.min(...flat), mx=Math.max(...flat);
+  const grid=document.getElementById('hm');
+  grid.style.gridTemplateColumns=`repeat(${MATS.length+1},1fr)`;
+  grid.innerHTML='';
+  const cor=document.createElement('div'); cor.className='hm-corner'; cor.textContent='Cpn↓ Mat→'; grid.appendChild(cor);
+  MATS.forEach(m=>{const h=document.createElement('div');h.className='hm-hdr';h.textContent=m+'yr';grid.appendChild(h);});
+  CPNS.forEach((c,ri)=>{
+    const rh=document.createElement('div'); rh.className='hm-hdr'; rh.textContent=c+'%'; grid.appendChild(rh);
+    MATS.forEach((m,ci)=>{
+      const v=data[ri][ci];
+      const cell=document.createElement('div'); cell.className='hm-cell';
+      if(activeCell.r===ri&&activeCell.c===ci)cell.classList.add('active');
+      cell.style.background=cellCol(v,mn,mx);
+      cell.textContent=(v>=0?'+':'')+v.toFixed(2)+'%';
+      cell.onclick=()=>clickCell(ri,ci,v,c,m);
+      grid.appendChild(cell);
+    });
+  });
+  // teaching note
+  const absVals=flat.map(Math.abs);
+  const maxI=absVals.indexOf(Math.max(...absVals));
+  const minI=absVals.indexOf(Math.min(...absVals));
+  const mr=Math.floor(maxI/MATS.length), mc_=maxI%MATS.length;
+  const lr=Math.floor(minI/MATS.length), lc_=minI%MATS.length;
+  const ratio=Math.abs(flat[maxI])/Math.max(Math.abs(flat[minI]),.001);
+  const ratioLine=Math.abs(flat[minI])<0.1
+    ? 'Ratio: n/a (least-sensitive cell &lt; 0.1%)'
+    : `Ratio: ${ratio.toFixed(1)}× difference for the same yield move`;
+  document.getElementById('teach').innerHTML=
+    `Most sensitive: ${CPNS[mr]}% coupon, ${MATS[mc_]}yr (${flat[maxI].toFixed(2)}% for ${shock>=0?'+':''}${shock}bp)<br>`+
+    `Least sensitive: ${CPNS[lr]}% coupon, ${MATS[lc_]}yr (${flat[minI].toFixed(2)}%)<br>`+
+    ratioLine;
+}
+
+function clickCell(ri,ci,val,cpn,mat){
+  activeCell={r:ri,c:ci};
+  if(tab==='A'){hlCurve=CPNS6.indexOf(cpn); hlBar=hlCurve;}
+  else{hlCurve=MATS6.indexOf(mat); hlBar=hlCurve;}
+  const p=bPrice(ytm,cpn,mat);
+  const d=modDur(ytm,cpn,mat);
+  const durEst=-d*(shock/10000)*100;
+  const cgain=val-durEst;
+  const call=document.getElementById('call');
+  call.className='callout on';
+  call.innerHTML=`<div class="call-title">Bond: ${cpn}% coupon, ${mat}yr maturity</div>`+
+    `<div class="call-row"><span class="call-k">Price at ${ytm.toFixed(1)}% YTM</span><span class="call-v">${p.toFixed(4)}</span></div>`+
+    `<div class="call-row"><span class="call-k">Modified Duration</span><span class="call-v">${d.toFixed(3)} yr</span></div>`+
+    `<div class="call-row"><span class="call-k">ΔP% — duration estimate</span><span class="call-v ${durEst>=0?'pos':'neg'}">${(durEst>=0?'+':'')+durEst.toFixed(3)}%</span></div>`+
+    `<div class="call-row"><span class="call-k">ΔP% — actual</span><span class="call-v ${val>=0?'pos':'neg'}">${(val>=0?'+':'')+val.toFixed(3)}%</span></div>`+
+    `<div class="call-row"><span class="call-k">Convexity gain</span><span class="call-v pos">+${cgain.toFixed(3)}%</span></div>`;
+  render();
+}
+
+// ─── controls ────────────────────────────────────────────────────────────────
+function setTab(t){
+  tab=t;
+  document.getElementById('btn-a').classList.toggle('active',t==='A');
+  document.getElementById('btn-b').classList.toggle('active',t==='B');
+  const lbl=document.getElementById('fixed-lbl'), sl=document.getElementById('fixed-sl'), v=document.getElementById('fixed-v');
+  if(t==='A'){lbl.textContent='Fixed Maturity:'; sl.min=1; sl.max=30; sl.step=1; sl.value=fixMaturity; v.textContent=fixMaturity+' yr';}
+  else{lbl.textContent='Fixed Coupon:'; sl.min=0; sl.max=15; sl.step=1; sl.value=fixCoupon; v.textContent=fixCoupon+'%';}
+  hlCurve=null; hlBar=null;
+  render();
+}
+function onFixed(){
+  const val=parseFloat(document.getElementById('fixed-sl').value);
+  if(tab==='A'){fixMaturity=val; document.getElementById('fixed-v').textContent=val+' yr';}
+  else{fixCoupon=val; document.getElementById('fixed-v').textContent=val+'%';}
+  render();
+}
+function onYtm(){
+  ytm=parseFloat(document.getElementById('ytm-sl').value);
+  document.getElementById('ytm-v').textContent=ytm.toFixed(1)+'%';
+  refreshCallout(); render();
+}
+function onShock(){
+  shock=parseInt(document.getElementById('shock-sl').value);
+  document.getElementById('shock-v').textContent=(shock>=0?'+':'')+shock+' bp';
+  refreshCallout(); render();
+}
+function refreshCallout(){
+  if(activeCell.r===null)return;
+  const c=CPNS[activeCell.r], m=MATS[activeCell.c];
+  clickCell(activeCell.r,activeCell.c,pctDelta(ytm,shock,c,m),c,m);
+}
+function render(){
+  requestAnimationFrame(()=>{drawChart(); drawBars(); drawHeatmap();});
+}
+window.addEventListener('resize',render);
+window.addEventListener('load',render);
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bond Markets — Interactive Tools</title>
+<style>
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #F8FAFC;
+    color: #1E293B;
+    margin: 0;
+    padding: 2.5em 1.5em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 {
+    color: #1B2A4A;
+    font-size: 1.8rem;
+    margin-bottom: 0.3em;
+  }
+  p.subtitle {
+    color: #475569;
+    margin-bottom: 2em;
+    text-align: center;
+  }
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.2em;
+    width: 100%;
+    max-width: 900px;
+  }
+  .tool-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-left: 4px solid #2563EB;
+    border-radius: 6px;
+    padding: 1.2em 1.4em;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .tool-card:hover {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+  .tool-card h2 {
+    margin: 0 0 0.4em 0;
+    font-size: 1.1rem;
+    color: #1B2A4A;
+  }
+  .tool-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #475569;
+  }
+</style>
+</head>
+<body>
+
+<h1>Bond Markets &amp; Fixed Income — Interactive Tools</h1>
+<p class="subtitle">Click a tool below to open it in your browser.</p>
+
+<div class="tool-grid">
+
+  <a class="tool-card" href="m1_s01_wal-calculator.html">
+    <h2>WAL Calculator</h2>
+    <p>Compute Weighted Average Life for amortising securities.</p>
+  </a>
+
+  <a class="tool-card" href="m1_s02_ch02_bond-pricing_tool.html">
+    <h2>Bond Pricing Tool</h2>
+    <p>Price a bond from coupon, yield, and maturity; explore the price–yield relationship.</p>
+  </a>
+
+  <a class="tool-card" href="m1_s02-s04_bond-parameter-explorer-simple.html">
+    <h2>Simple Bond Parameter Exploration</h2>
+    <p>Explore impact of changes in coupon, yield, and maturity on price of a Bond.</p>
+  </a>
+
+  <a class="tool-card" href="m1_s02-s04_bond-parameter-explorer-advanced.html">
+    <h2>Advanced Bond Parameter Exploration</h2>
+    <p>Advanced Exploration of impact of changes in coupon, yield, and maturity on price of a Bond.</p>
+  </a>
+
+  <a class="tool-card" href="m1_s03_ch03_total-return_tool.html">
+    <h2>Bond Return Calculation</h2>
+    <p>Return Calculation of a Bond Investment.</p>
+  </a>
+
+  <a class="tool-card" href="m1_s04_ch04-ch05_duration-convexity_tool.html">
+    <h2>Analyzing Duration and Convexity of a Bond</h2>
+    <p>Analysis of Duration and Convexity in calculating price change of a Bond with a given yield shock.</p>
+  </a>
+
+  <!-- Add a new <a class="tool-card" href="...html"> block for each new tool -->
+
+</div>
+
+</body>
+</html>

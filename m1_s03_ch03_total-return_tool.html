@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Total Return &amp; Horizon Analysis Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1B2A4A; --cobalt:#2563EB; --cobalt-light:#EFF6FF; --cobalt-dark:#1D4ED8;
+  --amber:#D97706; --amber-light:#FFFBEB; --green:#16A34A; --green-light:#F0FDF4;
+  --slate-light:#94A3B8; --slate-mid:#64748B; --border:#E2E8F0; --bg:#F8FAFC;
+  --mono:'IBM Plex Mono',monospace; --sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:#1E293B;font-size:14px}
+header{background:var(--navy);border-bottom:3px solid var(--cobalt);padding:.85rem 1.5rem;
+  display:flex;align-items:baseline;gap:1.25rem}
+header .slug{color:#fff;font-size:1.05rem;font-weight:600;letter-spacing:.01em}
+header .meta{color:var(--slate-light);font-family:var(--mono);font-size:.72rem;letter-spacing:.04em}
+
+.layout{display:grid;grid-template-columns:320px 1fr;gap:1rem;padding:1rem}
+@media(max-width:760px){.layout{grid-template-columns:1fr}}
+
+/* Input panels */
+.inp-panel{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:.75rem}
+.inp-hdr{padding:.45rem .75rem;font-family:var(--mono);font-size:.68rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;color:#fff}
+.inp-hdr.navy{background:var(--navy)}.inp-hdr.amber{background:var(--amber)}
+.inp-body{padding:.65rem .75rem;display:flex;flex-direction:column;gap:.55rem}
+.field{display:flex;flex-direction:column;gap:.2rem}
+.field label{font-family:var(--mono);font-size:.68rem;color:var(--slate-mid)}
+.field input{font-family:var(--mono);font-size:.8rem;padding:.32rem .5rem;
+  border:1px solid var(--border);border-radius:4px;background:#fff;color:#1E293B;
+  width:100%;transition:border-color .12s}
+.field input:focus{outline:none;border-color:var(--cobalt)}
+.note-amber{background:var(--amber-light);border:1px solid #FDE68A;border-radius:4px;
+  padding:.4rem .6rem;font-family:var(--mono);font-size:.64rem;color:#92400E;line-height:1.4;margin-top:.1rem}
+.grid-ranges{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.compute-btn{width:100%;padding:.45rem;background:var(--cobalt);color:#fff;border:none;
+  border-radius:4px;font-family:var(--mono);font-size:.75rem;font-weight:600;cursor:pointer;
+  transition:background .12s;margin-top:.35rem}
+.compute-btn:hover{background:var(--cobalt-dark)}
+.scenario-btn{width:100%;padding:.35rem;background:var(--amber);color:#fff;border:none;
+  border-radius:4px;font-family:var(--mono);font-size:.7rem;font-weight:600;cursor:pointer;
+  transition:opacity .12s;margin-top:.3rem}
+.scenario-btn:hover{opacity:.88}
+
+/* Output panels */
+.out-col{display:flex;flex-direction:column;gap:.75rem}
+.out-panel{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.out-hdr{padding:.45rem .75rem;font-family:var(--mono);font-size:.68rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;color:#fff}
+.out-hdr.cobalt{background:var(--cobalt)}.out-hdr.green{background:var(--green)}
+.out-body{padding:.75rem}
+
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:.5rem}
+.step{display:flex;align-items:flex-start;gap:.6rem}
+.step-num{min-width:1.4rem;height:1.4rem;background:var(--navy);color:#fff;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+  font-size:.68rem;font-weight:600;flex-shrink:0;margin-top:.05rem}
+.step-content{flex:1}
+.step-lbl{font-family:var(--mono);font-size:.64rem;color:var(--slate-mid)}
+.step-formula{font-family:var(--mono);font-size:.62rem;color:var(--slate-light);margin:.1rem 0}
+.step-val{font-family:var(--mono);font-size:.82rem;font-weight:600;color:#1E293B}
+.result-box{margin-top:.75rem;background:var(--cobalt-light);border:1px solid var(--cobalt);
+  border-radius:5px;padding:.6rem .75rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.result-lbl{font-family:var(--mono);font-size:.68rem;color:var(--navy)}
+.result-sub{font-family:var(--mono);font-size:.62rem;color:var(--slate-mid);margin-top:.15rem}
+.result-big{font-family:var(--mono);font-size:1.5rem;font-weight:600;color:var(--cobalt)}
+.delta-pos{color:var(--green)}.delta-neg{color:#DC2626}
+.warn-box{background:var(--amber-light);border:1px solid #FDE68A;border-radius:4px;
+  padding:.5rem .65rem;font-family:var(--mono);font-size:.68rem;color:#92400E}
+
+/* Scenario grid */
+.grid-container{overflow-x:auto}
+table.sgrid{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.68rem}
+table.sgrid th{background:var(--navy);color:#fff;padding:.3rem .45rem;text-align:center;white-space:nowrap}
+table.sgrid td{padding:.28rem .45rem;text-align:center;border-bottom:1px solid var(--border)}
+table.sgrid tr:last-child td{border-bottom:none}
+.cell-high{color:var(--green);font-weight:600}
+.cell-low{color:#DC2626;font-weight:600}
+.cell-mid{color:var(--slate-mid)}
+.grid-footer{display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;flex-wrap:wrap;gap:.3rem}
+.grid-legend{display:flex;gap:.75rem;font-family:var(--mono);font-size:.62rem;color:var(--slate-mid)}
+.leg-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.2rem}
+.grid-summary{font-family:var(--mono);font-size:.62rem;color:var(--slate-mid);text-align:right}
+.placeholder{font-family:var(--mono);font-size:.72rem;color:var(--slate-light);
+  text-align:center;padding:1.5rem;font-style:italic}
+
+.attribution{text-align:center;font-size:.75rem;color:#475569;
+  padding:1rem 0 .6rem;border-top:1px solid var(--border);margin-top:.5rem;
+  font-family:var(--sans);letter-spacing:.01em}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slug">Total Return &amp; Horizon Analysis Calculator</span>
+  <span class="meta">Module 1 &nbsp;·&nbsp; Session 3</span>
+</header>
+
+<div class="layout">
+  <!-- Left column -->
+  <div class="left-col">
+    <div class="inp-panel">
+      <div class="inp-hdr navy">Bond Parameters</div>
+      <div class="inp-body">
+        <div class="field"><label>Annual Coupon Rate (%)</label><input type="number" id="coupon" value="9" min="0" max="30" step="0.25"></div>
+        <div class="field"><label>Years to Maturity</label><input type="number" id="maturity" value="15" min="1" max="50" step="1"></div>
+        <div class="field"><label>Purchase Price (per 100 par)</label><input type="number" id="price" value="100" min="1" max="200" step="0.01"></div>
+        <div class="note-amber">Semiannual coupon payments assumed. Par value fixed at 100.</div>
+      </div>
+    </div>
+
+    <div class="inp-panel">
+      <div class="inp-hdr amber">Horizon &amp; Assumptions</div>
+      <div class="inp-body">
+        <div class="field"><label>Investment Horizon (years)</label><input type="number" id="horizon" value="4" min="1" max="40" step="1"></div>
+        <div class="field"><label>Reinvestment Rate (% p.a.)</label><input type="number" id="reinvest" value="7" min="0" max="20" step="0.25"></div>
+        <div class="field"><label>Exit Yield at Horizon (% p.a.)</label><input type="number" id="exitYield" value="10" min="0" max="25" step="0.25"></div>
+        <button class="compute-btn" onclick="computeSingle()">Compute Total Return</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:.15rem 0">
+        <div style="font-family:var(--mono);font-size:.64rem;color:var(--slate-mid);margin-bottom:.1rem">Scenario Grid Ranges</div>
+        <div class="grid-ranges">
+          <div class="field"><label>Reinvest min (%)</label><input type="number" id="rMin" value="6" step="0.5"></div>
+          <div class="field"><label>Reinvest max (%)</label><input type="number" id="rMax" value="10" step="0.5"></div>
+          <div class="field"><label>Exit yield min (%)</label><input type="number" id="eMin" value="8" step="0.5"></div>
+          <div class="field"><label>Exit yield max (%)</label><input type="number" id="eMax" value="12" step="0.5"></div>
+        </div>
+        <button class="scenario-btn" onclick="buildGrid()">Build Scenario Grid</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div class="out-col">
+    <div class="out-panel">
+      <div class="out-hdr cobalt">Step-by-Step Calculation</div>
+      <div class="out-body" id="steps-panel">
+        <div class="placeholder">Enter bond parameters and click Compute Total Return</div>
+      </div>
+    </div>
+
+    <div class="out-panel">
+      <div class="out-hdr green">Horizon Analysis — Scenario Grid</div>
+      <div class="out-body" id="grid-panel">
+        <div class="placeholder">Set grid ranges and click Build Scenario Grid</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="padding:0 1rem">
+  <div class="attribution">
+    © Kishore Rathi · Bond Markets &amp; Fixed Income
+    · Tool to be used by enrolled students only · Not for redistribution
+  </div>
+</div>
+
+<script>
+if(!document.querySelector('.attribution')){
+  document.body.innerHTML='<p style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;">Tool integrity check failed. Please access this tool via the course URL.</p>';
+  throw new Error('Attribution block missing — tool disabled');
+}
+const TOOL_EXPIRY=new Date('2026-08-31');
+if(new Date()>TOOL_EXPIRY){
+  document.body.innerHTML='<div style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;"><p style="font-size:1.1rem;font-weight:600;color:#1B2A4A;">This tool has expired.</p><p>It was valid for the 2026 cohort.</p><p>Contact the course instructor for current access.</p></div>';
+  throw new Error('Tool expired');
+}
+
+function pvAnn(r,n){if(r<1e-10)return n; return(1-Math.pow(1+r,-n))/r;}
+function fvAnn(r,n){if(r<1e-10)return n; return(Math.pow(1+r,n)-1)/r;}
+function bondPrice(y,c,n){return c*pvAnn(y,n)+100*Math.pow(1+y,-n);}
+
+function calcYTM(price,cSemi,nPeriods){
+  let lo=1e-6, hi=0.99;
+  for(let i=0;i<200;i++){
+    const mid=(lo+hi)/2;
+    bondPrice(mid,cSemi,nPeriods)>price ? lo=mid : hi=mid;
+    if(hi-lo<1e-10)break;
+  }
+  return(lo+hi)/2;
+}
+
+function computeTR(couponPct,matYrs,purchasePrice,horizYrs,reinvestPct,exitYieldPct){
+  const cSemi=couponPct/200*100;
+  const rSemi=reinvestPct/200;
+  const eSemi=exitYieldPct/200;
+  const h=horizYrs*2;
+  const remN=(matYrs-horizYrs)*2;
+  const fvCoupons=cSemi*fvAnn(rSemi,h);
+  const exitPrice=remN<=0?100:bondPrice(eSemi,cSemi,remN);
+  const totalFut=fvCoupons+exitPrice;
+  const trSemi=Math.pow(totalFut/purchasePrice,1/h)-1;
+  const trBEY=trSemi*2*100;
+  return{fvCoupons,exitPrice,totalFut,trSemi,trBEY,h,remN};
+}
+
+function g(id){return parseFloat(document.getElementById(id).value);}
+
+function computeSingle(){
+  const cpn=g('coupon'), mat=g('maturity'), pr=g('price');
+  const hor=g('horizon'), rein=g('reinvest'), ex=g('exitYield');
+  const panel=document.getElementById('steps-panel');
+  if(hor>=mat){
+    panel.innerHTML='<div class="warn-box">Investment horizon must be less than years to maturity.</div>';
+    return;
+  }
+  const{fvCoupons,exitPrice,totalFut,trSemi,trBEY,h,remN}=computeTR(cpn,mat,pr,hor,rein,ex);
+  const cSemi=cpn/200*100, nPer=mat*2;
+  const ytmSemi=calcYTM(pr,cSemi,nPer);
+  const ytmBEY=ytmSemi*2*100;
+  const delta=trBEY-ytmBEY;
+  const deltaClass=delta>=0?'delta-pos':'delta-neg';
+
+  panel.innerHTML=`
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-lbl">FV of coupon stream reinvested at ${rein}% p.a.</div>
+          <div class="step-formula">C_semi × [(1+r_semi)^h − 1] / r_semi</div>
+          <div class="step-val">${fvCoupons.toFixed(4)}</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-lbl">Projected exit price — ${remN/2}-yr bond at exit yield ${ex}%</div>
+          <div class="step-formula">P = C × PV-annuity(r, n) + 100 × (1+r)^−n</div>
+          <div class="step-val">${exitPrice.toFixed(4)}</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-lbl">Total future dollars</div>
+          <div class="step-formula">FV_coupons + exit_price</div>
+          <div class="step-val">${totalFut.toFixed(4)}</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-lbl">Semiannual total return — ${h} half-periods</div>
+          <div class="step-formula">(total_future / price)^(1/h) − 1</div>
+          <div class="step-val">${(trSemi*100).toFixed(4)}% per period</div>
+        </div>
+      </div>
+    </div>
+    <div class="result-box">
+      <div>
+        <div class="result-lbl">Total Return (Bond-Equivalent)</div>
+        <div class="result-sub">Purchase YTM = ${ytmBEY.toFixed(2)}% &nbsp;|&nbsp;
+          <span class="${deltaClass}">${delta>=0?'+':''}${delta.toFixed(2)} pp ${delta>=0?'above':'below'} YTM</span>
+        </div>
+      </div>
+      <div class="result-big">${trBEY.toFixed(2)}%</div>
+    </div>`;
+}
+
+function buildGrid(){
+  const cpn=g('coupon'), mat=g('maturity'), pr=g('price'), hor=g('horizon');
+  const rMin=g('rMin'), rMax=g('rMax'), eMin=g('eMin'), eMax=g('eMax');
+  const panel=document.getElementById('grid-panel');
+  if(hor>=mat){panel.innerHTML='<div class="warn-box">Horizon must be less than maturity.</div>';return;}
+  const rStep=(rMax-rMin)/4, eStep=(eMax-eMin)/4;
+  const rVals=[rMin,rMin+rStep,rMin+2*rStep,rMin+3*rStep,rMax];
+  const eVals=[eMin,eMin+eStep,eMin+2*eStep,eMin+3*eStep,eMax];
+  // compute all 25
+  const grid=eVals.map(e=>rVals.map(r=>computeTR(cpn,mat,pr,hor,r,e).trBEY));
+  const flat=grid.flat();
+  const sorted=[...flat].sort((a,b)=>a-b);
+  const lo30=sorted[Math.floor(flat.length*0.3)];
+  const hi30=sorted[Math.ceil(flat.length*0.7)];
+
+  let html=`<div class="grid-container"><table class="sgrid"><thead><tr>
+    <th>Exit Yield ↓ / Reinvest →</th>`;
+  rVals.forEach(r=>html+=`<th>${r.toFixed(2)}%</th>`);
+  html+=`</tr></thead><tbody>`;
+  eVals.forEach((e,ei)=>{
+    html+=`<tr><td style="font-weight:600;color:var(--navy)">${e.toFixed(2)}%</td>`;
+    rVals.forEach((r,ri)=>{
+      const v=grid[ei][ri];
+      let cls=v>=hi30?'cell-high':v<=lo30?'cell-low':'cell-mid';
+      html+=`<td class="${cls}">${v.toFixed(2)}%</td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  html+=`<div class="grid-footer">
+    <div class="grid-legend">
+      <span><span class="leg-dot" style="background:var(--green)"></span>High</span>
+      <span><span class="leg-dot" style="background:#DC2626"></span>Low</span>
+    </div>
+    <div class="grid-summary">
+      ${cpn}% coupon · ${mat}yr · ${hor}yr horizon · Price ${pr}
+    </div>
+  </div>`;
+  panel.innerHTML=html;
+}
+</script>
+</body>
+</html>

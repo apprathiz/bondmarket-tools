@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bond Parameter Explorer — Module 1 · Sessions 2–4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:        #1B2A4A;
+    --navy-mid:    #243555;
+    --cobalt:      #2563EB;
+    --cobalt-light:#93C5FD;
+    --amber:       #D97706;
+    --amber-light: #FEF3C7;
+    --green:       #16A34A;
+    --green-light: #DCFCE7;
+    --red:         #DC2626;
+    --red-light:   #FEE2E2;
+    --slate:       #475569;
+    --slate-mid:   #64748B;
+    --slate-light: #94A3B8;
+    --border:      #E2E8F0;
+    --surface:     #F8FAFC;
+    --white:       #FFFFFF;
+    --purple:      #7C3AED;
+    --mono:        'IBM Plex Mono', monospace;
+    --sans:        'DM Sans', sans-serif;
+  }
+
+  /* Colour assignments */
+  --c-0pct:   #D97706; /* Amber */
+  --c-2pct:   #7C3AED; /* Purple */
+  --c-4pct:   #DC2626; /* Red */
+  --c-7pct:   #2563EB; /* Cobalt */
+  --c-10pct:  #16A34A; /* Green */
+  --c-13pct:  #64748B; /* Slate-mid */
+
+  --c-2yr:    #16A34A; /* Green */
+  --c-5yr:    #2563EB; /* Cobalt */
+  --c-10yr:   #D97706; /* Amber */
+  --c-15yr:   #7C3AED; /* Purple */
+  --c-20yr:   #DC2626; /* Red */
+  --c-30yr:   #1B2A4A; /* Navy */
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--surface);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--navy);
+    border-bottom: 3px solid var(--cobalt);
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1.25rem;
+  }
+  header .slug { font-family: var(--sans); font-weight: 600; font-size: 1.05rem; color: var(--white); }
+  header .meta { font-family: var(--mono); font-size: 0.72rem; color: var(--slate-light); letter-spacing: 0.04em; }
+
+  .main { max-width: 900px; margin: 0 auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1.2rem; }
+
+  /* TAB TOGGLE */
+  .tab-bar {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem;
+    width: fit-content;
+  }
+  .tab-btn {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.4rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--slate);
+    transition: background 0.15s, color 0.15s;
+  }
+  .tab-btn.active {
+    background: var(--navy);
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  /* CHART PANEL */
+  .chart-panel {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .panel-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--slate-light);
+    margin-bottom: 0.75rem;
+  }
+
+  /* SLIDERS */
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 0.9rem;
+  }
+  .ctrl { display: flex; flex-direction: column; gap: 0.25rem; min-width: 200px; flex: 1; }
+  .ctrl-row { display: flex; justify-content: space-between; }
+  .ctrl-label { font-size: 0.79rem; font-weight: 500; color: var(--slate); }
+  .ctrl-value { font-family: var(--mono); font-size: 0.79rem; font-weight: 600; color: var(--navy); }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px;
+    background: var(--border); border-radius: 2px;
+    outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--cobalt); cursor: pointer;
+    border: 2px solid var(--white); box-shadow: 0 0 0 1px var(--cobalt);
+  }
+
+  canvas { display: block; width: 100%; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.2rem;
+    margin-top: 0.6rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--slate);
+  }
+  .legend-swatch {
+    width: 18px; height: 3px;
+    border-radius: 2px;
+  }
+
+  /* DIVIDER */
+  .shock-divider {
+    border: none;
+    border-top: 2px solid var(--border);
+  }
+
+  /* SHOCK PANEL */
+  .shock-panel {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .shock-header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.7rem;
+  }
+  .shock-label-main {
+    font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--slate-light);
+  }
+  .shock-value-tag {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .shock-yield-tag {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--slate-light);
+  }
+
+  .shock-ctrl { max-width: 420px; margin-bottom: 1rem; }
+
+  /* BAR CHART */
+  .bar-chart { display: flex; flex-direction: column; gap: 0.45rem; }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .bar-bond-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--slate);
+    width: 90px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    height: 22px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.1s ease;
+    min-width: 2px;
+  }
+  .bar-pct-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    width: 62px;
+    flex-shrink: 0;
+    text-align: left;
+  }
+
+  .insight-line {
+    margin-top: 0.75rem;
+    font-size: 0.79rem;
+    color: var(--slate);
+    font-style: italic;
+    min-height: 1.3em;
+    border-top: 1px solid var(--border);
+    padding-top: 0.55rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slug">Bond Parameter Explorer</span>
+  <span class="meta">Module 1 &nbsp;·&nbsp; Sessions 2–4</span>
+</header>
+
+<div class="main">
+
+  <!-- TAB TOGGLE -->
+  <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabA">Tab A — Vary Coupon</button>
+      <button class="tab-btn" id="tabB">Tab B — Vary Maturity</button>
+    </div>
+    <div id="tabSubLabel" style="font-size:0.76rem;color:var(--slate-light);font-style:italic;">
+      Maturity fixed; 6 coupon rates compared
+    </div>
+  </div>
+
+  <!-- CHART PANEL -->
+  <div class="chart-panel">
+    <div class="panel-label">Price–Yield Curves</div>
+    <div class="controls-row">
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label" id="fixedParamLabel">Fixed Maturity</span>
+          <span class="ctrl-value" id="fixedParamDisplay">15 yr</span>
+        </div>
+        <input type="range" id="fixedParamSlider">
+      </div>
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Current YTM</span>
+          <span class="ctrl-value" id="ytmDisplay">7.00%</span>
+        </div>
+        <input type="range" id="ytmSlider" min="0.5" max="20" step="0.25" value="7">
+      </div>
+    </div>
+    <canvas id="mainChart" height="280"></canvas>
+    <div class="legend" id="mainLegend"></div>
+  </div>
+
+  <!-- SHOCK PANEL -->
+  <div class="shock-panel">
+    <div class="shock-header-row">
+      <span class="shock-label-main">YTM Shock</span>
+      <span class="shock-value-tag" id="shockValueTag">+100 bp</span>
+      <span class="shock-yield-tag" id="shockYieldTag">7.00% → 8.00%</span>
+    </div>
+    <div class="shock-ctrl">
+      <input type="range" id="shockSlider" min="-300" max="300" step="10" value="100">
+    </div>
+    <div class="bar-chart" id="barChart"></div>
+    <div class="insight-line" id="insightLine"></div>
+  </div>
+
+</div>
+
+<div class="attribution">
+  © Kishore Rathi · Bond Markets &amp; Fixed Income
+  · Tool to be used by enrolled students only · Not for redistribution
+</div>
+
+<script>
+// ── INTEGRITY CHECK ──────────────────────────────────────────────────────────
+if (!document.querySelector('.attribution')) {
+  document.body.innerHTML =
+    '<p style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;">' +
+    'Tool integrity check failed. Please access this tool via the course URL.</p>';
+  throw new Error('Attribution block missing — tool disabled');
+}
+
+// ── EXPIRY CHECK ─────────────────────────────────────────────────────────────
+const TOOL_EXPIRY = new Date('2026-08-31');
+if (new Date() > TOOL_EXPIRY) {
+  document.body.innerHTML =
+    '<div style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;">' +
+    '<p style="font-size:1.1rem;font-weight:600;color:#1B2A4A;">This tool has expired.</p>' +
+    '<p>It was valid for the 2026 cohort.</p>' +
+    '<p>Contact the course instructor for current access.</p>' +
+    '</div>';
+  throw new Error('Tool expired');
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let activeTab = 'A';
+
+// Tab A bond families
+const COUPON_BONDS = [
+  { label: '0% coupon',  coupon:  0, color: '#D97706' },
+  { label: '2% coupon',  coupon:  2, color: '#7C3AED' },
+  { label: '4% coupon',  coupon:  4, color: '#DC2626' },
+  { label: '7% coupon',  coupon:  7, color: '#2563EB' },
+  { label: '10% coupon', coupon: 10, color: '#16A34A' },
+  { label: '13% coupon', coupon: 13, color: '#64748B' },
+];
+
+// Tab B bond families
+const MATURITY_BONDS = [
+  { label: '2yr',  years:  2, color: '#16A34A' },
+  { label: '5yr',  years:  5, color: '#2563EB' },
+  { label: '10yr', years: 10, color: '#D97706' },
+  { label: '15yr', years: 15, color: '#7C3AED' },
+  { label: '20yr', years: 20, color: '#DC2626' },
+  { label: '30yr', years: 30, color: '#1B2A4A' },
+];
+
+// ── FINANCIAL LOGIC ──────────────────────────────────────────────────────────
+function bondPrice(ytm_pct, coupon_pct, years) {
+  const c = coupon_pct / 200 * 100;
+  const y = ytm_pct / 200;
+  const n = years * 2;
+  if (Math.abs(y) < 1e-9) return c * n + 100;
+  return c * (1 - Math.pow(1 + y, -n)) / y + 100 * Math.pow(1 + y, -n);
+}
+
+function modDuration(ytm_pct, coupon_pct, years) {
+  const dy = 0.0001;
+  const P0   = bondPrice(ytm_pct, coupon_pct, years);
+  const P_up = bondPrice(ytm_pct + dy * 100, coupon_pct, years);
+  const P_dn = bondPrice(ytm_pct - dy * 100, coupon_pct, years);
+  return -(P_up - P_dn) / (2 * P0 * dy);
+}
+
+function pctChange(ytm_pct, shock_bp, coupon_pct, years) {
+  const P0 = bondPrice(ytm_pct, coupon_pct, years);
+  const P1 = bondPrice(ytm_pct + shock_bp / 100, coupon_pct, years);
+  return (P1 - P0) / P0 * 100;
+}
+
+// ── CANVAS CHART ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('mainChart');
+const ctx    = canvas.getContext('2d');
+
+function drawMainChart(bonds, ytm) {
+  const W  = canvas.offsetWidth;
+  const H  = 280;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const PAD = { top: 16, right: 120, bottom: 38, left: 56 };
+  const pw  = W - PAD.left - PAD.right;
+  const ph  = H - PAD.top  - PAD.bottom;
+
+  const xMin = 0, xMax = 18;
+  const pts  = 150;
+
+  // Nice axis helper — returns array of round tick values covering [lo, hi]
+  function niceAxis(lo, hi, targetCount) {
+    const range = hi - lo;
+    const rawStep = range / targetCount;
+    const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const niceSteps = [1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500];
+    const step = (niceSteps.find(s => s * mag >= rawStep) || niceSteps[niceSteps.length-1]) * mag;
+    const start = Math.floor(lo / step) * step;
+    const ticks = [];
+    for (let t = start; t <= hi + step * 0.01; t = Math.round((t + step) * 1e6) / 1e6) {
+      if (t >= lo - step * 0.01) ticks.push(Math.round(t * 1e4) / 1e4);
+    }
+    return ticks;
+  }
+
+  // Precompute all curves (start from xMin=0.01 to avoid div-by-zero at y=0)
+  const curves = bonds.map(b => {
+    const data = [];
+    for (let i = 0; i < pts; i++) {
+      const y = xMin + (i / (pts - 1)) * (xMax - xMin);
+      const safeY = Math.max(y, 0.001);
+      data.push({ y, p: bondPrice(safeY, b.coupon, b.years) });
+    }
+    return data;
+  });
+
+  const allPrices = curves.flat().map(d => d.p);
+  const pMin = Math.min(...allPrices);
+  const pMax = Math.max(...allPrices);
+  // Pad by 5% of range then snap to nice axis
+  const pRange = pMax - pMin || 10;
+  const rawLo  = pMin - pRange * 0.04;
+  const rawHi  = pMax + pRange * 0.04;
+  const yTicks = niceAxis(rawLo, rawHi, 6);
+  const pLo    = yTicks[0];
+  const pHi    = yTicks[yTicks.length - 1];
+
+  function xPx(y) { return PAD.left + (y - xMin) / (xMax - xMin) * pw; }
+  function yPx(p) { return PAD.top  + (1 - (p - pLo) / (pHi - pLo)) * ph; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Y grid lines at nice tick positions
+  ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 1;
+  yTicks.forEach(t => {
+    const y = yPx(t);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + pw, y); ctx.stroke();
+  });
+
+  // X grid lines at 2% intervals
+  const xTickVals = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18];
+  xTickVals.forEach(v => {
+    const x = xPx(v);
+    ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + ph); ctx.stroke();
+  });
+
+  // Par line at 100
+  if (pLo < 100 && 100 < pHi) {
+    const py100 = yPx(100);
+    ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD.left, py100); ctx.lineTo(PAD.left + pw, py100); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '9px IBM Plex Mono, monospace'; ctx.textAlign = 'right';
+    ctx.fillText('100', PAD.left - 5, py100 + 3);
+  }
+
+  // Current YTM vertical line
+  const vx = xPx(Math.min(ytm, xMax));
+  ctx.strokeStyle = '#93C5FD'; ctx.lineWidth = 1.2;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(vx, PAD.top); ctx.lineTo(vx, PAD.top + ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw each curve
+  curves.forEach((data, i) => {
+    ctx.strokeStyle = bonds[i].color;
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    data.forEach((d, j) => {
+      const px = yPx(d.p);
+      if (j === 0) ctx.moveTo(xPx(d.y), px);
+      else         ctx.lineTo(xPx(d.y), px);
+    });
+    ctx.stroke();
+
+    // Current point dot
+    const P0 = bondPrice(Math.max(ytm, 0.001), bonds[i].coupon, bonds[i].years);
+    ctx.beginPath();
+    ctx.arc(xPx(ytm), yPx(P0), 4, 0, 2 * Math.PI);
+    ctx.fillStyle = bonds[i].color; ctx.fill();
+  });
+
+  // ── INLINE LEGEND: spread labels to avoid overlap ────────────────────────
+  // Compute each bond's price at xMax for initial y position
+  const labelItems = bonds.map((b, i) => ({
+    label: b.label,
+    color: b.color,
+    rawY: yPx(bondPrice(Math.max(xMax - 0.01, 0.001), b.coupon, b.years))
+  }));
+
+  // Sort by y position (top to bottom on canvas = ascending rawY)
+  labelItems.sort((a, b) => a.rawY - b.rawY);
+
+  // Spread pass: enforce minimum gap of 13px
+  const minGap = 13;
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = 1; i < labelItems.length; i++) {
+      if (labelItems[i].rawY - labelItems[i-1].rawY < minGap) {
+        const mid = (labelItems[i].rawY + labelItems[i-1].rawY) / 2;
+        labelItems[i-1].rawY = mid - minGap / 2;
+        labelItems[i].rawY   = mid + minGap / 2;
+      }
+    }
+    // Clamp to chart bounds
+    for (let i = 0; i < labelItems.length; i++) {
+      labelItems[i].rawY = Math.max(PAD.top + 5, Math.min(PAD.top + ph - 2, labelItems[i].rawY));
+    }
+  }
+
+  ctx.font = '9px IBM Plex Mono, monospace';
+  ctx.textAlign = 'left';
+  labelItems.forEach(item => {
+    ctx.fillStyle = item.color;
+    ctx.fillText(item.label, PAD.left + pw + 7, item.rawY + 3);
+  });
+
+  // X-axis labels at 2% intervals
+  ctx.fillStyle = '#475569'; ctx.textAlign = 'center';
+  ctx.font = '9px IBM Plex Mono, monospace';
+  xTickVals.forEach(v => ctx.fillText(v + '%', xPx(v), H - PAD.bottom + 14));
+
+  // Y-axis labels at nice ticks
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#475569';
+  yTicks.forEach(t => {
+    ctx.fillText(Number.isInteger(t) ? t.toString() : t.toFixed(1), PAD.left - 6, yPx(t) + 3);
+  });
+
+  // X-axis title
+  ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center'; ctx.font = '9px DM Sans, sans-serif';
+  ctx.fillText('YTM %', PAD.left + pw / 2, H - 2);
+}
+
+// ── BUILD BOND ARRAYS FOR ACTIVE TAB ─────────────────────────────────────────
+function getBonds() {
+  const fp = parseFloat(document.getElementById('fixedParamSlider').value);
+  if (activeTab === 'A') {
+    return COUPON_BONDS.map(b => ({
+      label: b.label, coupon: b.coupon, years: fp, color: b.color
+    }));
+  } else {
+    return MATURITY_BONDS.map(b => ({
+      label: b.label, coupon: parseFloat(fp.toFixed(4)), years: b.years, color: b.color
+    }));
+  }
+}
+
+// ── LEGEND ───────────────────────────────────────────────────────────────────
+function buildLegend(bonds) {
+  const el = document.getElementById('mainLegend');
+  el.innerHTML = bonds.map(b =>
+    `<div class="legend-item">
+      <div class="legend-swatch" style="background:${b.color}"></div>
+      <span>${b.label}</span>
+    </div>`
+  ).join('');
+}
+
+// ── BAR CHART ─────────────────────────────────────────────────────────────────
+function buildBarChart(bonds, ytm, shockBp) {
+  const data = bonds.map(b => ({
+    label: b.label,
+    color: b.color,
+    pct: pctChange(ytm, shockBp, b.coupon, b.years)
+  }));
+
+  // Sort by magnitude descending (most extreme first)
+  data.sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+
+  const maxAbs = Math.max(...data.map(d => Math.abs(d.pct)));
+
+  const el = document.getElementById('barChart');
+  el.innerHTML = data.map(d => {
+    const pctFmt = (d.pct >= 0 ? '+' : '') + d.pct.toFixed(2) + '%';
+    const barPct = maxAbs > 0 ? Math.abs(d.pct) / maxAbs * 100 : 0;
+    const barColor = d.pct < 0 ? '#DC2626' : '#16A34A';
+    return `<div class="bar-row">
+      <div class="bar-bond-label">${d.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${barPct.toFixed(1)}%;background:${barColor};"></div>
+      </div>
+      <div class="bar-pct-label" style="color:${barColor};">${pctFmt}</div>
+    </div>`;
+  }).join('');
+
+  // Insight line
+  const sorted = [...data].sort((a, b) => a.pct - b.pct);
+  const mostExtreme   = sorted[0];
+  const leastExtreme  = sorted[sorted.length - 1];
+  let insight = '';
+  if (maxAbs > 0.01) {
+    const ratio = (Math.abs(mostExtreme.pct) / Math.max(0.01, Math.abs(leastExtreme.pct))).toFixed(1);
+    if (shockBp > 0) {
+      insight = `${mostExtreme.label} loses ${ratio}× more than ${leastExtreme.label} for the same yield move.`;
+    } else if (shockBp < 0) {
+      const mostGainer = sorted[sorted.length - 1];
+      const leastGainer = sorted[0];
+      const r = (Math.abs(mostGainer.pct) / Math.max(0.01, Math.abs(leastGainer.pct))).toFixed(1);
+      insight = `${mostGainer.label} gains ${r}× more than ${leastGainer.label}.`;
+    } else {
+      insight = 'No yield shock — all price changes are zero.';
+    }
+  } else {
+    insight = 'No yield shock — price changes near zero.';
+  }
+  document.getElementById('insightLine').textContent = insight;
+}
+
+// ── FULL RENDER ──────────────────────────────────────────────────────────────
+function render() {
+  const ytm   = parseFloat(document.getElementById('ytmSlider').value);
+  const shock = parseInt(document.getElementById('shockSlider').value);
+  const fp    = parseFloat(document.getElementById('fixedParamSlider').value);
+  const bonds = getBonds();
+
+  // Displays
+  document.getElementById('ytmDisplay').textContent = ytm.toFixed(2) + '%';
+  if (activeTab === 'A') {
+    document.getElementById('fixedParamDisplay').textContent = fp.toFixed(0) + ' yr';
+  } else {
+    document.getElementById('fixedParamDisplay').textContent = fp.toFixed(2) + '%';
+  }
+
+  // Shock display
+  const shockStr = (shock >= 0 ? '+' : '') + shock + ' bp';
+  document.getElementById('shockValueTag').textContent = shockStr;
+  const newYtm = ytm + shock / 100;
+  document.getElementById('shockYieldTag').textContent = ytm.toFixed(2) + '% → ' + newYtm.toFixed(2) + '%';
+
+  drawMainChart(bonds, ytm);
+  buildLegend(bonds);
+  buildBarChart(bonds, ytm, shock);
+}
+
+// ── TAB SWITCH ────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabA').classList.toggle('active', tab === 'A');
+  document.getElementById('tabB').classList.toggle('active', tab === 'B');
+
+  const fpSlider = document.getElementById('fixedParamSlider');
+  if (tab === 'A') {
+    // Fixed param = maturity (2–30, step 1, default 15)
+    fpSlider.min = '2'; fpSlider.max = '30'; fpSlider.step = '1'; fpSlider.value = '15';
+    document.getElementById('fixedParamLabel').textContent = 'Fixed Maturity';
+    document.getElementById('tabSubLabel').textContent = 'Maturity fixed; 6 coupon rates compared';
+  } else {
+    // Fixed param = coupon (0–15, step 0.25, default 7)
+    fpSlider.min = '0'; fpSlider.max = '15'; fpSlider.step = '0.25'; fpSlider.value = '7';
+    document.getElementById('fixedParamLabel').textContent = 'Fixed Coupon';
+    document.getElementById('tabSubLabel').textContent = 'Coupon fixed; 6 maturities compared';
+  }
+  render();
+}
+
+// ── INIT SLIDER A ─────────────────────────────────────────────────────────────
+const fpSlider = document.getElementById('fixedParamSlider');
+fpSlider.min = '2'; fpSlider.max = '30'; fpSlider.step = '1'; fpSlider.value = '15';
+
+// ── TOOLTIP ───────────────────────────────────────────────────────────────────
+const tooltip = document.createElement('div');
+tooltip.style.cssText = `
+  position:fixed;pointer-events:none;z-index:999;
+  background:var(--navy);color:var(--white);
+  font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
+  padding:0.3rem 0.6rem;border-radius:5px;
+  display:none;white-space:nowrap;line-height:1.5;
+`;
+document.body.appendChild(tooltip);
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const W  = canvas.width;
+  const H  = canvas.height;
+  const PAD = { top: 16, right: 120, bottom: 38, left: 56 };
+  const pw  = W - PAD.left - PAD.right;
+
+  const xMin = 1, xMax = 18;
+  const yHovered = xMin + (mx - PAD.left) / pw * (xMax - xMin);
+
+  if (yHovered < xMin || yHovered > xMax || mx < PAD.left || mx > PAD.left + pw) {
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const bonds  = getBonds();
+  const ytm    = parseFloat(document.getElementById('ytmSlider').value);
+  const lines  = bonds.map(b => {
+    const price = bondPrice(yHovered, b.coupon, b.years);
+    const md    = modDuration(yHovered, b.coupon, b.years);
+    return `${b.label.padEnd(12)}: ${price.toFixed(2)}  D_mod=${md.toFixed(2)}`;
+  });
+
+  tooltip.textContent = `YTM ${yHovered.toFixed(2)}%\n` + lines.join('\n');
+  tooltip.style.display = 'block';
+  tooltip.style.left = (e.clientX + 14) + 'px';
+  tooltip.style.top  = (e.clientY - 20) + 'px';
+});
+
+canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+// ── WIRE EVENTS ───────────────────────────────────────────────────────────────
+document.getElementById('tabA').addEventListener('click', () => switchTab('A'));
+document.getElementById('tabB').addEventListener('click', () => switchTab('B'));
+document.getElementById('fixedParamSlider').addEventListener('input', render);
+document.getElementById('ytmSlider').addEventListener('input', render);
+document.getElementById('shockSlider').addEventListener('input', render);
+window.addEventListener('resize', render);
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>

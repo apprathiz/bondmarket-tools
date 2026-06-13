@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weighted Average Life (WAL) Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1B2A4A; --cobalt:#2563EB; --cobalt-light:#EFF6FF; --cobalt-dark:#1D4ED8;
+  --amber:#D97706; --amber-light:#FFFBEB; --green:#16A34A; --green-light:#F0FDF4;
+  --purple:#7C3AED; --purple-light:#F5F3FF; --slate-light:#94A3B8; --slate-mid:#64748B;
+  --border:#E2E8F0; --bg:#F8FAFC; --mono:'IBM Plex Mono',monospace; --sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:#1E293B;font-size:14px}
+
+header{background:var(--navy);border-bottom:3px solid var(--cobalt);padding:.85rem 1.5rem;
+  display:flex;align-items:baseline;gap:1.25rem}
+header .slug{color:#fff;font-size:1.05rem;font-weight:600;letter-spacing:.01em}
+header .meta{color:var(--slate-light);font-family:var(--mono);font-size:.72rem;letter-spacing:.04em}
+
+.layout{display:grid;grid-template-columns:300px 1fr;gap:.75rem;padding:.75rem}
+@media(max-width:760px){.layout{grid-template-columns:1fr}}
+
+/* Left column */
+.inp-panel{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:.65rem}
+.inp-hdr{padding:.42rem .75rem;font-family:var(--mono);font-size:.68rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;color:#fff}
+.inp-hdr.navy{background:var(--navy)}.inp-hdr.amber{background:var(--amber)}
+.inp-body{padding:.6rem .75rem;display:flex;flex-direction:column;gap:.48rem}
+.field label{font-family:var(--mono);font-size:.68rem;color:var(--slate-mid);display:block;margin-bottom:.15rem}
+.field input,.field select{font-family:var(--mono);font-size:.82rem;padding:.3rem .5rem;
+  border:1px solid var(--border);border-radius:4px;background:#fff;color:#1E293B;width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:var(--cobalt)}
+.compute-btn{width:100%;padding:.45rem;background:var(--cobalt);color:#fff;border:none;
+  border-radius:4px;font-family:var(--mono);font-size:.75rem;font-weight:600;cursor:pointer;margin-top:.2rem}
+.compute-btn:hover{background:var(--cobalt-dark)}
+
+/* Right column */
+.out-col{display:flex;flex-direction:column;gap:.5rem}
+.out-panel{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.out-hdr{padding:.4rem .75rem;font-family:var(--mono);font-size:.68rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;color:#fff}
+.out-hdr.cobalt{background:var(--cobalt)}.out-hdr.purple{background:var(--purple)}.out-hdr.green{background:var(--green)}
+.out-body{padding:.6rem .75rem}
+
+/* Measures */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+.card{border-radius:5px;padding:.4rem .55rem;border-top:3px solid transparent}
+.card.cobalt{background:var(--cobalt-light);border-top-color:var(--cobalt)}
+.card.amber{background:var(--amber-light);border-top-color:var(--amber)}
+.card.green{background:var(--green-light);border-top-color:var(--green)}
+.card.purple{background:var(--purple-light);border-top-color:var(--purple)}
+.card-lbl{font-family:var(--mono);font-size:.56rem;text-transform:uppercase;letter-spacing:.06em;color:var(--slate-mid)}
+.card-val{font-family:var(--mono);font-size:.95rem;font-weight:600;color:#1E293B;margin:.1rem 0 .08rem}
+.card-sub{font-family:var(--mono);font-size:.56rem;color:var(--slate-light);line-height:1.3}
+
+.rate-note{font-family:var(--mono);font-size:.62rem;color:var(--slate-mid);margin-top:.45rem;line-height:1.4}
+
+/* Chart */
+canvas{display:block;width:100%;height:250px}
+.chart-legend{display:flex;gap:1rem;margin-top:.4rem;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:.3rem;font-family:var(--mono);font-size:.62rem;color:var(--slate-mid)}
+.leg-sw{width:20px;height:2px}
+
+/* Schedule table */
+.tbl-wrap{overflow-x:auto}
+table.stbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.65rem}
+table.stbl th{background:var(--navy);color:#fff;padding:.28rem .4rem;text-align:right;white-space:nowrap}
+table.stbl th:first-child{text-align:center}
+table.stbl td{padding:.24rem .4rem;border-bottom:1px solid var(--border);text-align:right}
+table.stbl td:first-child{text-align:center}
+table.stbl tr:last-child td{border-bottom:none}
+table.stbl tr.ellipsis-row td{text-align:center;color:var(--slate-light);font-style:italic}
+
+.attribution{text-align:center;font-size:.75rem;color:#475569;
+  padding:1rem 0 .6rem;border-top:1px solid var(--border);margin-top:.5rem;
+  font-family:var(--sans);letter-spacing:.01em}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slug">Weighted Average Life (WAL) Calculator</span>
+  <span class="meta">Module 1 &nbsp;·&nbsp; Bond Features &amp; Amortising Securities</span>
+</header>
+
+<div class="layout">
+  <!-- Left column -->
+  <div>
+    <div class="inp-panel">
+      <div class="inp-hdr navy">Security Parameters</div>
+      <div class="inp-body">
+        <div class="field"><label>Principal Amount</label>
+          <input type="number" id="principal" value="180000" min="1" step="1000"></div>
+        <div class="field"><label>Term (Years)</label>
+          <input type="number" id="termYears" value="15" min="1" max="40" step="1"></div>
+        <div class="field"><label>Payment Frequency</label>
+          <select id="freq">
+            <option value="12">Monthly</option>
+            <option value="4">Quarterly</option>
+            <option value="2">Semi-annual</option>
+            <option value="1">Annual</option>
+          </select></div>
+        <div class="field"><label>Annual Interest Rate (% p.a.)</label>
+          <input type="number" id="rate" value="9" min="0" max="30" step="0.25"></div>
+      </div>
+    </div>
+    <div class="inp-panel">
+      <div class="inp-hdr amber">Amortisation Type</div>
+      <div class="inp-body">
+        <div class="field"><label>Repayment Structure</label>
+          <select id="amortType">
+            <option value="straight">Straight-line (equal principal)</option>
+            <option value="annuity">Annuity-style (equal total payment)</option>
+          </select></div>
+        <button class="compute-btn" onclick="compute()">Compute WAL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div class="out-col">
+
+    <div class="out-panel">
+      <div class="out-hdr cobalt">WAL Summary</div>
+      <div class="out-body">
+        <div class="cards">
+          <div class="card cobalt">
+            <div class="card-lbl">Stated Maturity</div>
+            <div class="card-val" id="c-maturity">—</div>
+            <div class="card-sub">years &middot; bullet repayment</div>
+          </div>
+          <div class="card amber">
+            <div class="card-lbl" id="c-wal-sel-lbl">WAL · Straight-line</div>
+            <div class="card-val" id="c-wal-sel">—</div>
+            <div class="card-sub" id="c-wal-ratio">— % of stated maturity</div>
+          </div>
+          <div class="card green">
+            <div class="card-lbl" id="c-wal-oth-lbl">WAL · Annuity-style</div>
+            <div class="card-val" id="c-wal-oth">—</div>
+            <div class="card-sub">years &middot; for comparison</div>
+          </div>
+        </div>
+        <div class="rate-note">
+          Rate affects WAL only for annuity-style amortisation; straight-line WAL depends solely on the principal repayment schedule.
+        </div>
+      </div>
+    </div>
+
+    <div class="out-panel">
+      <div class="out-hdr purple">Principal Repayment Profile (% of Original Principal)</div>
+      <div class="out-body">
+        <canvas id="repay-canvas"></canvas>
+        <div class="chart-legend">
+          <div class="leg-item">
+            <div class="leg-sw" style="background:var(--cobalt)"></div>Remaining balance
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="out-panel">
+      <div class="out-hdr green">Amortisation Schedule</div>
+      <div class="out-body">
+        <div class="tbl-wrap">
+          <div id="tbl-area">
+            <div style="font-family:var(--mono);font-size:.72rem;color:var(--slate-light);
+              text-align:center;padding:1rem;font-style:italic">
+              Click Compute WAL to generate schedule
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="padding:0 1rem">
+  <div class="attribution">
+    © Kishore Rathi · Bond Markets &amp; Fixed Income
+    · Tool to be used by enrolled students only · Not for redistribution
+  </div>
+</div>
+
+<script>
+if(!document.querySelector('.attribution')){
+  document.body.innerHTML='<p style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;">Tool integrity check failed. Please access this tool via the course URL.</p>';
+  throw new Error('Attribution block missing — tool disabled');
+}
+const TOOL_EXPIRY=new Date('2026-08-31');
+if(new Date()>TOOL_EXPIRY){
+  document.body.innerHTML='<div style="font-family:sans-serif;text-align:center;margin-top:4rem;color:#475569;"><p style="font-size:1.1rem;font-weight:600;color:#1B2A4A;">This tool has expired.</p><p>It was valid for the 2026 cohort.</p><p>Contact the course instructor for current access.</p></div>';
+  throw new Error('Tool expired');
+}
+
+// ─── Fixed chart axis ───────────────────────────────────────────────────────
+const Y_MIN=0, Y_MAX=100;
+const Y_TICKS=[0,20,40,60,80,100];
+
+// ─── Amortisation schedule ────────────────────────────────────────────────
+function buildSchedule(principal, nPeriods, ratePerPeriod, type){
+  const balances=[], principalPaid=[];
+  let bal=principal;
+
+  if(type==='straight'){
+    const pPer = principal/nPeriods;
+    for(let t=1;t<=nPeriods;t++){
+      principalPaid.push(pPer);
+      bal-=pPer;
+      balances.push(Math.max(bal,0));
+    }
+  } else {
+    let pmt;
+    if(ratePerPeriod===0){
+      pmt = principal/nPeriods;
+    } else {
+      pmt = principal*ratePerPeriod/(1-Math.pow(1+ratePerPeriod,-nPeriods));
+    }
+    for(let t=1;t<=nPeriods;t++){
+      const interest = bal*ratePerPeriod;
+      let pPaid = pmt-interest;
+      if(t===nPeriods) pPaid=bal;
+      principalPaid.push(pPaid);
+      bal-=pPaid;
+      balances.push(Math.max(bal,0));
+    }
+  }
+  return {principalPaid, balances};
+}
+
+function computeWAL(principalPaid, totalPrincipal, periodsPerYear){
+  let weighted=0;
+  for(let t=1;t<=principalPaid.length;t++){
+    weighted += t*principalPaid[t-1];
+  }
+  return (weighted/totalPrincipal)/periodsPerYear;
+}
+
+function g(id){ return document.getElementById(id); }
+function gv(id){ return parseFloat(g(id).value); }
+
+function fmt(n,d){
+  if(!isFinite(n)) return '—';
+  return n.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+
+// ─── Compute ──────────────────────────────────────────────────────────────
+function compute(){
+  const principal=gv('principal'), termYears=gv('termYears'),
+        freq=parseInt(g('freq').value), ratePct=gv('rate'),
+        amortType=g('amortType').value;
+
+  const nPeriods=Math.round(termYears*freq);
+  const ratePerPeriod=(ratePct/100)/freq;
+
+  const sched=buildSchedule(principal,nPeriods,ratePerPeriod,amortType);
+  const walSel=computeWAL(sched.principalPaid,principal,freq);
+
+  const otherType = amortType==='straight' ? 'annuity' : 'straight';
+  const otherSched=buildSchedule(principal,nPeriods,ratePerPeriod,otherType);
+  const walOth=computeWAL(otherSched.principalPaid,principal,freq);
+
+  const selLabel = amortType==='straight' ? 'Straight-line' : 'Annuity-style';
+  const othLabel = otherType==='straight' ? 'Straight-line' : 'Annuity-style';
+
+  g('c-maturity').textContent = fmt(termYears,2);
+  g('c-wal-sel-lbl').textContent = 'WAL · '+selLabel;
+  g('c-wal-oth-lbl').textContent = 'WAL · '+othLabel;
+  g('c-wal-sel').textContent = fmt(walSel,2)+' yr';
+  g('c-wal-oth').textContent = fmt(walOth,2)+' yr';
+  g('c-wal-ratio').textContent = fmt((walSel/termYears)*100,1)+'% of stated maturity';
+
+  renderChart(sched, nPeriods, principal);
+  renderTable(sched, nPeriods, principal);
+}
+
+// ─── Chart ────────────────────────────────────────────────────────────────
+const repayCanvas=document.getElementById('repay-canvas');
+
+function renderChart(sched, nPeriods, principal){
+  const dpr=window.devicePixelRatio||1;
+  const rect=repayCanvas.getBoundingClientRect();
+  repayCanvas.width=rect.width*dpr;
+  repayCanvas.height=rect.height*dpr;
+  const ctx=repayCanvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=rect.width, H=rect.height;
+
+  const pad={t:14,r:16,b:36,l:42};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+
+  const X_MIN=0, X_MAX=nPeriods;
+  function toX(p){ return pad.l+(p-X_MIN)/(X_MAX-X_MIN)*cw; }
+  function toY(v){ return pad.t+(Y_MAX-v)/(Y_MAX-Y_MIN)*ch; }
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='#E2E8F0'; ctx.lineWidth=0.5;
+  Y_TICKS.forEach(y=>{
+    ctx.beginPath(); ctx.moveTo(pad.l,toY(y)); ctx.lineTo(pad.l+cw,toY(y)); ctx.stroke();
+  });
+
+  // X-axis ticks: show ~6 evenly spaced period markers
+  const xTickCount=6;
+  const xTicks=[];
+  for(let i=0;i<=xTickCount;i++){
+    xTicks.push(Math.round(X_MIN+(X_MAX-X_MIN)*i/xTickCount));
+  }
+
+  // Axis labels
+  ctx.fillStyle='#64748B'; ctx.font="10px 'IBM Plex Mono',monospace";
+  ctx.textAlign='center';
+  xTicks.forEach(x=>{ ctx.fillText(x, toX(x), pad.t+ch+14); });
+  ctx.fillText('Period', pad.l+cw/2, pad.t+ch+28);
+
+  ctx.textAlign='right';
+  Y_TICKS.forEach(y=>{ ctx.fillText(y+'%', pad.l-5, toY(y)+3); });
+
+  // Remaining balance line (% of original principal)
+  ctx.strokeStyle='#2563EB'; ctx.lineWidth=2.2;
+  ctx.beginPath();
+  for(let t=1;t<=nPeriods;t++){
+    const pct=(sched.balances[t-1]/principal)*100;
+    const px=toX(t), py=toY(pct);
+    if(t===1){ ctx.moveTo(toX(0),toY(100)); ctx.lineTo(px,py); }
+    else { ctx.lineTo(px,py); }
+  }
+  ctx.stroke();
+}
+
+// ─── Schedule table ──────────────────────────────────────────────────────
+function renderTable(sched, nPeriods, principal){
+  const showFirst=Math.min(6,nPeriods);
+  const showLast = nPeriods>showFirst ? Math.min(2,nPeriods-showFirst) : 0;
+
+  let html=`<table class="stbl"><thead><tr>
+    <th>Period</th><th>Principal Repaid</th><th>Remaining Balance</th><th>% of Principal Repaid</th>
+  </tr></thead><tbody>`;
+
+  for(let t=1;t<=showFirst;t++){
+    html+=rowHTML(t,sched.principalPaid[t-1],sched.balances[t-1],principal);
+  }
+  if(showLast>0){
+    html+=`<tr class="ellipsis-row"><td colspan="4">...</td></tr>`;
+    for(let t=nPeriods-showLast+1;t<=nPeriods;t++){
+      html+=rowHTML(t,sched.principalPaid[t-1],sched.balances[t-1],principal);
+    }
+  }
+  html+=`</tbody></table>`;
+  document.getElementById('tbl-area').innerHTML=html;
+}
+
+function rowHTML(t,paid,bal,principal){
+  return `<tr>
+    <td>${t}</td>
+    <td>${fmt(paid,2)}</td>
+    <td>${fmt(bal,2)}</td>
+    <td>${fmt((paid/principal)*100,2)}%</td>
+  </tr>`;
+}
+
+window.addEventListener('resize', ()=>{
+  const principal=gv('principal'), termYears=gv('termYears'),
+        freq=parseInt(g('freq').value), ratePct=gv('rate'),
+        amortType=g('amortType').value;
+  const nPeriods=Math.round(termYears*freq);
+  const ratePerPeriod=(ratePct/100)/freq;
+  const sched=buildSchedule(principal,nPeriods,ratePerPeriod,amortType);
+  renderChart(sched, nPeriods, principal);
+});
+
+window.addEventListener('load', compute);
+</script>
+</body>
+</html>
